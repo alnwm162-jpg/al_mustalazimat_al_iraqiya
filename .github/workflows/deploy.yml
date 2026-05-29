@@ -19,7 +19,7 @@ jobs:
         run: flutter pub get
         
       - name: Build Web
-        run: flutter build web --release --base-href "/al_mustalazimat_al_iraqiya/"
+        run: flutter build web --release --base-href "/al_mustalazimat_al_iraqiya-main/"
         
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
