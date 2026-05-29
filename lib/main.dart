@@ -12,7 +12,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'pages/invoices_page.dart';
-import 'models/store.dart';
 import 'models/product.dart';
 import 'services/product_service.dart';
 
@@ -190,126 +189,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _showStoreLinkDialog() async {
-  final user = supabase.auth.currentUser;
-  if (user == null) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('يرجى تسجيل الدخول أولاً')));
-    return;
-  }
-
-  // ensure store and slug exist, create if necessary
-  String? slug;
-  try {
-    final store = await ensureStoreForUser(user.id);
-    if (store != null) slug = store.slug;
-  } catch (e) {
-    debugPrint('ensure store failed: $e');
-  }
-
-  final displayLink = slug != null ? '$storeShareBaseUrl/store.html?slug=$slug' : '$storeShareBaseUrl/store.html?user_id=${user.id}';
-
-  if (!mounted) return;
-  await showDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('رابط متجرك'),
-      content: SelectableText(displayLink),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Clipboard.setData(ClipboardData(text: displayLink));
-            Navigator.of(ctx).pop();
-            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم نسخ الرابط')));
-          },
-          child: const Text('نسخ'),
-        ),
-        FilledButton(
-          onPressed: () {
-            Navigator.of(ctx).pop();
-            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const StorePage()));
-          },
-          child: const Text('فتح صفحة المتجر'),
-        ),
-      ],
-    ),
-  );
-}
-
-  // ensure store and slug exist, create if necessary
-  String? slug;
-  try {
-    final store = await ensureStoreForUser(user.id);
-    if (store != null) slug = store.slug;
-  } catch (e) {
-    debugPrint('ensure store failed: $e');
-  }
-
-  final displayLink = slug != null ? '$storeShareBaseUrl/store.html?slug=$slug' : '$storeShareBaseUrl/store.html?user_id=${user.id}';
-
-  if (!mounted) return;
-  await showDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('رابط متجرك'),
-      content: SelectableText(displayLink),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Clipboard.setData(ClipboardData(text: displayLink));
-            Navigator.of(ctx).pop();
-            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم نسخ الرابط')));
-          },
-          child: const Text('نسخ'),
-        ),
-        FilledButton(
-          onPressed: () {
-            Navigator.of(ctx).pop();
-            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const StorePage()));
-          },
-          child: const Text('فتح صفحة المتجر'),
-        ),
-      ],
-    ),
-  );
-}
-
-  // ensure store and slug exist, create if necessary
-  String? slug;
-  try {
-    final store = await ensureStoreForUser(user.id);
-    if (store != null) slug = store.slug;
-  } catch (e) {
-    debugPrint('ensure store failed: $e');
-  }
-
-  final displayLink = slug != null ? '$storeShareBaseUrl/store.html?slug=$slug' : '$storeShareBaseUrl/store.html?user_id=${user.id}';
-
-  if (!mounted) return;
-  await showDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('رابط متجرك'),
-      content: SelectableText(displayLink),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Clipboard.setData(ClipboardData(text: displayLink));
-            Navigator.of(ctx).pop();
-            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم نسخ الرابط')));
-          },
-          child: const Text('نسخ'),
-        ),
-        FilledButton(
-          onPressed: () {
-            Navigator.of(ctx).pop();
-            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const StorePage()));
-          },
-          child: const Text('فتح صفحة المتجر'),
-        ),
-      ],
-    ),
-  );
-}
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('يرجى تسجيل الدخول أولاً')));
+      return;
+    }
 
     // ensure store and slug exist, create if necessary
     String? slug;
@@ -333,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Clipboard.setData(ClipboardData(text: displayLink));
               Navigator.of(ctx).pop();
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم نسخ رابط المتجر')));
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم نسخ الرابط')));
             },
             child: const Text('نسخ'),
           ),
@@ -342,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.of(ctx).pop();
               Navigator.of(context).push(MaterialPageRoute(builder: (_) => const StorePage()));
             },
-            child: const Text('عرض داخل التطبيق'),
+            child: const Text('فتح صفحة المتجر'),
           ),
         ],
       ),
