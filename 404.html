@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>جارٍ إعادة التوجيه...</title>
+</head>
+<body>
+  <p>جارٍ إعادة التوجيه إلى صفحة المتجر...</p>
+  <script>
+    const path = window.location.pathname;
+    const parts = path.split('/store/');
+    if (parts.length > 1 && parts[1]) {
+      const slug = parts[1].replace(/\/+$/, '');
+      const base = parts[0] || '/';
+      const url = window.location.origin + base + '/store.html?slug=' + encodeURIComponent(slug);
+      window.location.replace(url);
+    } else {
+      // Fallback to root store.html
+      const base = path.replace(/\/[^/]*$/, '');
+      window.location.replace(window.location.origin + base + '/store.html' + window.location.search);
+    }
+  </script>
+</body>
+</html>
