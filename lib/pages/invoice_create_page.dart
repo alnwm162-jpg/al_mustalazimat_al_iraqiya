@@ -275,19 +275,19 @@ class _InvoiceCreatePageState extends State<InvoiceCreatePage> {
                         scrollDirection: Axis.horizontal,
                         child: DataTable(
                           columns: const [
+                            DataColumn(label: Text('#')),
                             DataColumn(label: Text('الوصف')),
-                            DataColumn(label: Text('ملاحظات')),
                             DataColumn(label: Text('الكمية')),
                             DataColumn(label: Text('سعر الوحدة')),
                             DataColumn(label: Text('الضريبة')),
-                            DataColumn(label: Text('الإجمالي')),
+                            DataColumn(label: Text('إجمالي السطر')),
                             DataColumn(label: Text('إجراءات')),
                           ],
                           rows: List.generate(_items.length, (i) {
                             final it = _items[i];
                             return DataRow(cells: [
+                              DataCell(Text('${i + 1}')),
                               DataCell(SizedBox(width: 180, child: Text(it.description, overflow: TextOverflow.ellipsis))),
-                              DataCell(SizedBox(width: 140, child: Text(it.note ?? '-', overflow: TextOverflow.ellipsis))),
                               DataCell(Text(it.quantity.toStringAsFixed(2))),
                               DataCell(Text(it.unitPrice.toStringAsFixed(2))),
                               DataCell(Text(it.tax.toStringAsFixed(2))),

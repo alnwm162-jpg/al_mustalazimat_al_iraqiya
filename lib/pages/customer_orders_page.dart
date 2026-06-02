@@ -10,6 +10,7 @@ import '../models/product.dart';
 import '../services/product_service.dart';
 
 const String whatsappTargetNumber = '+9647746582364';
+const String orderTrackingUrl = 'https://yourstore.com/track-order';
 
 class CustomerOrdersPage extends StatefulWidget {
   final String? storeSlug;
@@ -124,6 +125,11 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
       return digits.substring(1);
     }
     return digits;
+  }
+
+  String _generateOrderNumber() {
+    final now = DateTime.now();
+    return 'ORD-${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
   }
 
   void _updateCartQuantity(int productId, int delta) {
@@ -318,11 +324,18 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                 if (product.imageUrl != null) ...[
                   ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: Image.network(product.imageUrl!, height: 180, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Container(
-                          height: 180,
+                    child: AspectRatio(
+                      aspectRatio: 4 / 3,
+                      child: Image.network(
+                        product.imageUrl!,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
                           color: Colors.grey.shade200,
                           child: const Icon(Icons.image_not_supported, size: 80),
-                        )),
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -390,8 +403,11 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
         return sum + qty * product.price;
       });
 
+      final orderNumber = _generateOrderNumber();
+      final trackingLink = '$orderTrackingUrl?order=$orderNumber';
       final text = StringBuffer();
       text.writeln('طلب جديد من صفحة طلبات الزبائن');
+      text.writeln('رقم الطلب: $orderNumber');
       if (customerName.isNotEmpty) {
         text.writeln('اسم العميل: $customerName');
       } else {
@@ -404,15 +420,19 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
         text.writeln('عنوان العميل: $customerAddress');
       }
       text.writeln('---');
-      for (final product in selectedProducts) {
+      for (var i = 0; i < selectedProducts.length; i++) {
+        final product = selectedProducts[i];
         final qty = _selectedQuantities[product.id] ?? 0;
-        text.writeln('${product.name} x$qty = ${(product.price * qty).toStringAsFixed(0)}');
+        text.writeln('${i + 1}. ${product.name} x$qty = ${(product.price * qty).toStringAsFixed(0)}');
       }
       text.writeln('---');
       text.writeln('المجموع: ${total.toStringAsFixed(0)}');
       if (orderNote.isNotEmpty) {
         text.writeln('ملاحظات: $orderNote');
       }
+      text.writeln('');
+      text.writeln('يمكنك تتبع حالة طلبك من أي مكان عبر الرابط التالي:');
+      text.writeln(trackingLink);
 
       final url = Uri.parse('https://wa.me/$whatsappNumber?text=${Uri.encodeComponent(text.toString())}');
       final canOpen = await canLaunchUrl(url);
