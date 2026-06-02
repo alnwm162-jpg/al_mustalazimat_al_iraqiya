@@ -1,5 +1,6 @@
+import 'dart:io';
 import 'package:sembast/sembast.dart';
-import 'package:sembast_sqflite/sembast_sqflite.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/customer_order_model.dart';
 
 class CustomerOrdersDatabase {
@@ -14,9 +15,10 @@ class CustomerOrdersDatabase {
     return _database!;
   }
 
-  Future<Database> _initDB(String filePath) async {
-    final databaseFactory = getDatabaseFactory();
-    final db = await databaseFactory.openDatabase(filePath);
+  Future<Database> _initDB(String dbName) async {
+    final appDocDir = await getApplicationDocumentsDirectory();
+    final dbPath = '${appDocDir.path}/$dbName';
+    final db = await databaseFactoryIo.openDatabase(dbPath);
     return db;
   }
 
