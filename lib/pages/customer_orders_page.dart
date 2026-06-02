@@ -11,9 +11,10 @@ import '../models/customer_order_model.dart';
 import '../services/product_service.dart';
 import '../db/customer_orders_db.dart';
 import 'customer_orders_tracking_page.dart';
+import 'order_tracking_public_page.dart';
 
 const String whatsappTargetNumber = '+9647746582364';
-const String orderTrackingUrl = 'https://yourstore.com/track-order';
+const String orderTrackingUrl = 'متابعة-الطلب';
 
 class CustomerOrdersPage extends StatefulWidget {
   final String? storeSlug;
@@ -407,7 +408,6 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
       });
 
       final orderNumber = _generateOrderNumber();
-      final trackingLink = '$orderTrackingUrl?order=$orderNumber';
       final text = StringBuffer();
       text.writeln('طلب جديد من صفحة طلبات الزبائن');
       text.writeln('رقم الطلب: $orderNumber');
@@ -434,8 +434,10 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
         text.writeln('ملاحظات: $orderNote');
       }
       text.writeln('');
-      text.writeln('يمكنك تتبع حالة طلبك من أي مكان عبر الرابط التالي:');
-      text.writeln(trackingLink);
+      text.writeln('📱 يمكنك متابعة حالة طلبك من التطبيق:');
+      text.writeln('- اضغط على أيقونة "متابعة" في الصفحة الرئيسية');
+      text.writeln('- أدخل رقم الطلب: $orderNumber');
+      text.writeln('- ستشاهد جميع مراحل معالجة طلبك');
 
       final url = Uri.parse('https://wa.me/$whatsappNumber?text=${Uri.encodeComponent(text.toString())}');
       final canOpen = await canLaunchUrl(url);
@@ -699,6 +701,18 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
       appBar: AppBar(
         title: const Text('متجرنا صمم خصيصا لك'),
         actions: [
+          Tooltip(
+            message: 'متابعة طلب',
+            child: IconButton(
+              icon: const Icon(Icons.track_changes_rounded),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const OrderTrackingPublicPage()),
+                );
+              },
+            ),
+          ),
           Tooltip(
             message: 'متابعة الطلبات',
             child: IconButton(
