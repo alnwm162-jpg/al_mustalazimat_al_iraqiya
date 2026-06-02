@@ -642,7 +642,7 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('متجر الطلبات'),
+        title: const Text('متجرنا صمم خصيصا لك'),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
