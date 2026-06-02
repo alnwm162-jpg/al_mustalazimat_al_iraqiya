@@ -7,7 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/product.dart';
+import '../models/customer_order_model.dart';
 import '../services/product_service.dart';
+import '../db/customer_orders_db.dart';
+import 'customer_orders_tracking_page.dart';
 
 const String whatsappTargetNumber = '+9647746582364';
 const String orderTrackingUrl = 'https://yourstore.com/track-order';
@@ -444,6 +447,38 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
       final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
       if (!launched) {
         await _showMessage('فشل فتح واتساب. حاول مرة أخرى.');
+        return;
+      }
+
+      // حفظ الطلب في قاعدة البيانات بعد الإرسال الناجح
+      try {
+        final order = CustomerOrderModel(
+          orderNumber: orderNumber,
+          customerName: customerName.isNotEmpty ? customerName : 'زائر',
+          customerPhone: customerPhone,
+          customerAddress: customerAddress,
+          totalAmount: total,
+          status: 'pending',
+          notes: orderNote.isNotEmpty ? orderNote : null,
+          items: selectedProducts
+              .map((p) => {
+                    'id': p.id,
+                    'name': p.name,
+                    'quantity': _selectedQuantities[p.id] ?? 0,
+                    'price': p.price,
+                  })
+              .toList(),
+          createdAt: DateTime.now(),
+        );
+        await CustomerOrdersDatabase.instance.insertOrder(order);
+        if (mounted) {
+          await _showMessage('✓ تم إرسال الطلب بنجاح! رقم الطلب: $orderNumber');
+        }
+      } catch (e) {
+        debugPrint('Error saving order: $e');
+        if (mounted) {
+          await _showMessage('تحذير: لم يتم حفظ الطلب محليا، لكن تم إرساله');
+        }
       }
     } finally {
       if (mounted) {
@@ -664,6 +699,18 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
       appBar: AppBar(
         title: const Text('متجرنا صمم خصيصا لك'),
         actions: [
+          Tooltip(
+            message: 'متابعة الطلبات',
+            child: IconButton(
+              icon: const Icon(Icons.assignment_turned_in_rounded),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CustomerOrdersTrackingPage()),
+                );
+              },
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.search),
             tooltip: 'بحث',
