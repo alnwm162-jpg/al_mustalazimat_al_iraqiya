@@ -25,6 +25,7 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _customerNameController = TextEditingController();
   final TextEditingController _customerPhoneController = TextEditingController();
+  final TextEditingController _customerAddressController = TextEditingController();
   final TextEditingController _orderNoteController = TextEditingController();
   late final Future<List<Product>> _productsFuture;
   final Map<int, int> _selectedQuantities = {};
@@ -53,6 +54,7 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
     _welcomeTimer?.cancel();
     _searchController.dispose();
     _customerNameController.dispose();
+    _customerAddressController.dispose();
     _customerPhoneController.dispose();
     _orderNoteController.dispose();
     for (final controller in _quantityControllers.values) {
@@ -359,6 +361,7 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
   Future<void> _sendOrderWhatsApp({
     required String customerName,
     required String customerPhone,
+    required String customerAddress,
     required String orderNote,
   }) async {
     if (_isSendingOrder) return;
@@ -392,6 +395,9 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
       }
       if (customerPhone.isNotEmpty) {
         text.writeln('جوال العميل: $customerPhone');
+      }
+      if (customerAddress.isNotEmpty) {
+        text.writeln('عنوان العميل: $customerAddress');
       }
       text.writeln('---');
       for (final product in selectedProducts) {
@@ -572,6 +578,13 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                     ),
                     const SizedBox(height: 12),
                     TextField(
+                      controller: _customerAddressController,
+                      decoration: const InputDecoration(labelText: 'العنوان (اختياري)'),
+                      minLines: 1,
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
                       controller: _orderNoteController,
                       decoration: const InputDecoration(labelText: 'ملاحظات الطلب (اختياري)'),
                       minLines: 2,
@@ -591,6 +604,7 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                               await _sendOrderWhatsApp(
                                 customerName: _customerNameController.text.trim(),
                                 customerPhone: _customerPhoneController.text.trim(),
+                                customerAddress: _customerAddressController.text.trim(),
                                 orderNote: _orderNoteController.text.trim(),
                               );
                               if (!sheetContext.mounted) return;
