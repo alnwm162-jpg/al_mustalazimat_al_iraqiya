@@ -27,7 +27,11 @@ class _SliderImagesSettingsPageState extends State<SliderImagesSettingsPage> {
   final List<TextEditingController> _controllers = List.generate(5, (_) => TextEditingController());
   final List<bool> _isUploading = List.generate(5, (_) => false);
   bool _isSaving = false;
+  bool _isSliderLoading = false;
+  bool _isCategoryLoading = false;
   List<Map<String, dynamic>> _sliderImages = [];
+  List<Map<String, dynamic>> _sliderItems = [];
+  List<Map<String, dynamic>> _categoryItems = [];
 
   final List<_CategorySection> _categorySections = const [
     _CategorySection(
@@ -56,6 +60,7 @@ class _SliderImagesSettingsPageState extends State<SliderImagesSettingsPage> {
   void initState() {
     super.initState();
     _loadSliderImages();
+    _loadCategoryItems();
   }
 
   @override
@@ -67,19 +72,51 @@ class _SliderImagesSettingsPageState extends State<SliderImagesSettingsPage> {
   }
 
   Future<void> _loadSliderImages() async {
+    setState(() {
+      _isSliderLoading = true;
+    });
+
     try {
       final images = await _dataService.loadSliderImages();
-      if (mounted) {
-        setState(() {
-          _sliderImages = images;
-          // تحميل أول 5 صور إلى المحررات
-          for (var i = 0; i < _controllers.length && i < images.length; i++) {
-            _controllers[i].text = images[i]['image_url'] ?? '';
-          }
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _sliderItems = images;
+        _sliderImages = images.map((img) => img['image_url'] as String).toList();
+        // تحميل أول 5 صور إلى المحررات
+        for (var i = 0; i < _controllers.length && i < images.length; i++) {
+          _controllers[i].text = images[i]['image_url'] ?? '';
+        }
+      });
     } catch (e) {
       debugPrint('خطأ في تحميل الصور: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSliderLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadCategoryItems() async {
+    setState(() {
+      _isCategoryLoading = true;
+    });
+
+    try {
+      final categories = await fetchCategoryImages();
+      if (!mounted) return;
+      setState(() {
+        _categoryItems = categories;
+      });
+    } catch (e) {
+      debugPrint('خطأ في تحميل صور الأقسام: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCategoryLoading = false;
+        });
+      }
     }
   }
 
@@ -224,6 +261,187 @@ class _SliderImagesSettingsPageState extends State<SliderImagesSettingsPage> {
         });
       }
     }
+  }
+
+  Future<void> _replaceSliderImage(int index) async {
+    if (index < 0 || index >= _sliderItems.length) return;
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.single;
+    final imageBytes = file.bytes;
+    if (imageBytes == null) return;
+
+    setState(() {
+      _isUploading[index] = true;
+    });
+
+    try {
+      final item = _sliderItems[index];
+      final uploadResult = await _dataService.updateSliderImageFromBytes(
+        item['id'] as int,
+        imageBytes,
+        item['title'] as String? ?? 'صورة السلايدر ${index + 1}',
+        fileName: file.name,
+      );
+
+      if (uploadResult.failed) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('فشل تحديث صورة السلايدر: ${uploadResult.error ?? 'حدث خطأ'}')),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _sliderItems[index]['image_url'] = uploadResult.imageUrl;
+        _sliderImages = _sliderItems.map((img) => img['image_url'] as String).toList();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم تحديث صورة السلايدر بنجاح')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('خطأ في تحديث صورة السلايدر: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('حدث خطأ أثناء تحديث صورة السلايدر: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading[index] = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _deleteSliderImage(int id, int index) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('حذف صورة السلايدر'),
+          content: const Text('هل أنت متأكد من حذف هذه الصورة؟ لا يمكن التراجع عن هذا الإجراء.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('إلغاء')),
+            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('حذف')),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+    final success = await deleteSliderImage(id);
+    if (!success) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('فشل حذف صورة السلايدر')),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _sliderItems.removeAt(index);
+      _sliderImages = _sliderItems.map((img) => img['image_url'] as String).toList();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('تم حذف صورة السلايدر بنجاح')),
+    );
+  }
+
+  Future<void> _replaceCategoryImage(int index) async {
+    if (index < 0 || index >= _categoryItems.length) return;
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.single;
+    final imageBytes = file.bytes;
+    if (imageBytes == null) return;
+
+    setState(() {
+      _isUploading[index] = true;
+    });
+
+    try {
+      final item = _categoryItems[index];
+      final uploadResult = await _dataService.updateCategoryImageFromBytes(
+        item['id'] as int,
+        imageBytes,
+        item['category_name'] as String? ?? 'قسم جديد',
+        (item['product_keywords'] as String?)?.split(',').where((p) => p.isNotEmpty).toList() ?? [],
+        fileName: file.name,
+      );
+
+      if (uploadResult.failed) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('فشل تحديث صورة القسم: ${uploadResult.error ?? 'حدث خطأ'}')),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _categoryItems[index]['image_url'] = uploadResult.imageUrl;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم تحديث صورة القسم بنجاح')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('خطأ في تحديث صورة القسم: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('حدث خطأ أثناء تحديث صورة القسم: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading[index] = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _deleteCategoryImage(int id, int index) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('حذف صورة القسم'),
+          content: const Text('هل أنت متأكد من حذف هذه الصورة من الأقسام؟'),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('إلغاء')),
+            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('حذف')),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+    final success = await deleteCategoryImage(id);
+    if (!success) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('فشل حذف صورة القسم')),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _categoryItems.removeAt(index);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('تم حذف صورة القسم بنجاح')),
+    );
   }
 
   Future<void> _pickAndUploadNewImage() async {
@@ -397,6 +615,133 @@ class _SliderImagesSettingsPageState extends State<SliderImagesSettingsPage> {
     );
   }
 
+  Widget _buildSliderManagementSection() {
+    if (_isSliderLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_sliderItems.isEmpty) {
+      return const Text('لا توجد صور سلايدر محفوظة حتى الآن.');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('إدارة صور السلايدر', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        ..._sliderItems.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          return Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: _dataService.buildImageWidget(
+                      item['image_url'] as String? ?? '',
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item['title'] as String? ?? 'صورة السلايدر', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
+                        Text('ID: ${item['id']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    tooltip: 'تعديل الصورة',
+                    onPressed: () => _replaceSliderImage(index),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    tooltip: 'حذف الصورة',
+                    onPressed: () => _deleteSliderImage(item['id'] as int, index),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  Widget _buildCategoryManagementSection() {
+    if (_isCategoryLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_categoryItems.isEmpty) {
+      return const Text('لا توجد صور أقسام محفوظة بعد.');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('إدارة صور الأقسام', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        ..._categoryItems.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          final keywords = (item['product_keywords'] as String?)?.split(',').where((keyword) => keyword.isNotEmpty).join('، ') ?? '';
+          return Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: _dataService.buildImageWidget(
+                      item['image_url'] as String? ?? '',
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item['category_name'] as String? ?? 'قسم جديد', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        if (keywords.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(keywords, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        ],
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    tooltip: 'تعديل صورة القسم',
+                    onPressed: () => _replaceCategoryImage(index),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    tooltip: 'حذف صورة القسم',
+                    onPressed: () => _deleteCategoryImage(item['id'] as int, index),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
+
   Widget _buildCategorySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -472,6 +817,10 @@ class _SliderImagesSettingsPageState extends State<SliderImagesSettingsPage> {
             ),
             const SizedBox(height: 16),
             _buildSliderPreview(),
+            const SizedBox(height: 16),
+            _buildSliderManagementSection(),
+            const SizedBox(height: 16),
+            _buildCategoryManagementSection(),
             const SizedBox(height: 16),
             _buildCategorySection(),
             const SizedBox(height: 16),

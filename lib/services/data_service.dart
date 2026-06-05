@@ -50,7 +50,11 @@ class DataService {
       final sanitizedFileName = _sanitizeFileName(fileName ?? DateTime.now().millisecondsSinceEpoch.toString());
       final path = 'slider/$sanitizedFileName';
 
-      await _supabase.storage.from('uploads').uploadBinary(path, imageBytes);
+      await _supabase.storage.from('uploads').uploadBinary(
+        path,
+        imageBytes,
+        fileOptions: const FileOptions(upsert: true),
+      );
       final publicUrl = await _getPublicUrl(path);
 
       await _supabase.from('slider_items').insert({
@@ -90,7 +94,11 @@ class DataService {
       final sanitizedFileName = _sanitizeFileName(fileName ?? DateTime.now().millisecondsSinceEpoch.toString());
       final path = 'categories/$sanitizedFileName';
 
-      await _supabase.storage.from('uploads').uploadBinary(path, imageBytes);
+      await _supabase.storage.from('uploads').uploadBinary(
+        path,
+        imageBytes,
+        fileOptions: const FileOptions(upsert: true),
+      );
       final publicUrl = await _getPublicUrl(path);
 
       await _supabase.from('category_items').insert({
@@ -134,6 +142,57 @@ class DataService {
       return UploadResult.success(imageUrl);
     } catch (e, st) {
       debugPrint('خطأ في حفظ رابط صورة القسم: $e');
+      debugPrint(st.toString());
+      return UploadResult.failure(e.toString());
+    }
+  }
+
+  Future<UploadResult> updateSliderImageFromBytes(int id, Uint8List imageBytes, String title, {String? fileName}) async {
+    try {
+      final sanitizedFileName = _sanitizeFileName(fileName ?? DateTime.now().millisecondsSinceEpoch.toString());
+      final path = 'slider/$sanitizedFileName';
+
+      await _supabase.storage.from('uploads').uploadBinary(
+        path,
+        imageBytes,
+        fileOptions: const FileOptions(upsert: true),
+      );
+      final publicUrl = await _getPublicUrl(path);
+
+      await _supabase.from('slider_items').update({
+        'image_url': publicUrl,
+        'title': title,
+      }).eq('id', id);
+
+      return UploadResult.success(publicUrl);
+    } catch (e, st) {
+      debugPrint('خطأ في تحديث صورة السلايدر: $e');
+      debugPrint(st.toString());
+      return UploadResult.failure(e.toString());
+    }
+  }
+
+  Future<UploadResult> updateCategoryImageFromBytes(int id, Uint8List imageBytes, String categoryName, List<String> productKeywords, {String? fileName}) async {
+    try {
+      final sanitizedFileName = _sanitizeFileName(fileName ?? DateTime.now().millisecondsSinceEpoch.toString());
+      final path = 'categories/$sanitizedFileName';
+
+      await _supabase.storage.from('uploads').uploadBinary(
+        path,
+        imageBytes,
+        fileOptions: const FileOptions(upsert: true),
+      );
+      final publicUrl = await _getPublicUrl(path);
+
+      await _supabase.from('category_items').update({
+        'image_url': publicUrl,
+        'category_name': categoryName,
+        'product_keywords': productKeywords.join(','),
+      }).eq('id', id);
+
+      return UploadResult.success(publicUrl);
+    } catch (e, st) {
+      debugPrint('خطأ في تحديث صورة القسم: $e');
       debugPrint(st.toString());
       return UploadResult.failure(e.toString());
     }
