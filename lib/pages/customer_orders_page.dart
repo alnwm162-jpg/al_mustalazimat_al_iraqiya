@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -72,7 +70,6 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
   Timer? _sliderTimer;
   bool _showWelcomeBanner = false;
 
-  static const String _categoryImagesPrefKey = 'orders_page_category_images';
   List<String> _categoryImageUrls = [];
   final List<bool> _isCategoryUploading = List.generate(4, (_) => false);
 
@@ -190,10 +187,6 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
         _categoryImageUrls = defaults;
       });
     }
-  }
-
-  Future<void> _saveCategoryImages() async {
-    // لا مزيد من الحاجة لحفظ في SharedPreferences - البيانات محفوظة في Supabase بالفعل
   }
 
   Future<void> _pickAndUploadCategoryImage(int index) async {
@@ -1252,11 +1245,6 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
         : 16.0;
     final cardSpacing = width > 900 ? 18.0 : 12.0;
     final appBarHeight = width > 600 ? 82.0 : 70.0;
-    final crossAxisCount = width >= 1100
-        ? 3
-        : width >= 720
-        ? 2
-        : 1;
     final productCardAspectRatio = width >= 1100
         ? 1.1
         : width >= 720
@@ -1279,7 +1267,7 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                 prefixIcon: const Icon(Icons.search),
                 hintText: 'ابحث عن المنتجات',
                 filled: true,
-                fillColor: colorScheme.surfaceVariant,
+                fillColor: colorScheme.surfaceContainerHighest,
                 contentPadding: EdgeInsets.symmetric(
                   vertical: width > 700 ? 18 : 14,
                   horizontal: 16,
@@ -1416,7 +1404,9 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        color: colorScheme.primaryContainer.withOpacity(0.18),
+                        color: colorScheme.primaryContainer.withValues(
+                          alpha: 0.18,
+                        ),
                         margin: EdgeInsets.zero,
                         child: Padding(
                           padding: EdgeInsets.all(pagePadding),
@@ -1464,7 +1454,9 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        color: colorScheme.secondaryContainer.withOpacity(0.16),
+                        color: colorScheme.secondaryContainer.withValues(
+                          alpha: 0.16,
+                        ),
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: pagePadding,
@@ -1596,7 +1588,9 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                                               end: Alignment.bottomCenter,
                                               colors: [
                                                 Colors.transparent,
-                                                Colors.black.withOpacity(0.4),
+                                                Colors.black.withValues(
+                                                  alpha: 0.4,
+                                                ),
                                               ],
                                               stops: const [0.45, 1.0],
                                             ),
@@ -1616,12 +1610,16 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                                                 ? available <= 5
                                                       ? colorScheme
                                                             .errorContainer
-                                                            .withOpacity(0.9)
+                                                            .withValues(
+                                                              alpha: 0.9,
+                                                            )
                                                       : colorScheme
                                                             .primaryContainer
-                                                            .withOpacity(0.9)
-                                                : colorScheme.error.withOpacity(
-                                                    0.85,
+                                                            .withValues(
+                                                              alpha: 0.9,
+                                                            )
+                                                : colorScheme.error.withValues(
+                                                    alpha: 0.85,
                                                   ),
                                             borderRadius: BorderRadius.circular(
                                               12,
@@ -1653,7 +1651,9 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                                               end: Alignment.bottomCenter,
                                               colors: [
                                                 Colors.transparent,
-                                                Colors.black.withOpacity(0.85),
+                                                Colors.black.withValues(
+                                                  alpha: 0.85,
+                                                ),
                                               ],
                                             ),
                                           ),
@@ -1707,7 +1707,7 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                                                       ),
                                                     ],
                                                   ),
-                                                  FilledButton.small(
+                                                  FilledButton(
                                                     onPressed: available > 0
                                                         ? () {
                                                             setState(() {
@@ -1790,8 +1790,8 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                                         child: Container(
                                           padding: const EdgeInsets.all(6),
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withOpacity(
-                                              0.45,
+                                            color: Colors.black.withValues(
+                                              alpha: 0.45,
                                             ),
                                             shape: BoxShape.circle,
                                           ),
