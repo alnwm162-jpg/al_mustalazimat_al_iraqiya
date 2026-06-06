@@ -1303,39 +1303,39 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _selectedCount > 0 ? _showOrderSummaryDialog : null,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const Icon(Icons.shopping_cart),
-                  if (_selectedCount > 0)
-                    Positioned(
-                      right: -2,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.redAccent,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                        child: Text(
-                          _selectedCount.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.shopping_cart),
+                  onPressed: _selectedCount > 0 ? _showOrderSummaryDialog : null,
+                  tooltip: 'سلة الطلبات',
+                ),
+                if (_selectedCount > 0)
+                  Positioned(
+                    right: 6,
+                    top: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                      child: Text(
+                        _selectedCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ],
