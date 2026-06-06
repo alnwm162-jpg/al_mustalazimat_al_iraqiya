@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../main.dart' show LoginPage;
 import '../models/product.dart';
 import '../models/customer_order_model.dart';
 import '../services/product_service.dart';
